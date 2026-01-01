@@ -1,0 +1,12 @@
+{
+  "run_id": "20251231_230503_task_c_regress_n_ridge_tune",
+  "task": "task_c_regress_n",
+  "model": "ridge",
+  "metrics": {
+    "rmse": 0.02478004530382134,
+    "r2": 0.9999992610459887
+  },
+  "best_params": {
+    "reg__alpha": 0.1
+  }
+}

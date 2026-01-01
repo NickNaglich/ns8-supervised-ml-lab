@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: ns8lab
+Version: 0.0.1
+Summary: NS8 supervised learning lab
+Author: Your Name
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scikit-learn
+Requires-Dist: matplotlib
+Requires-Dist: joblib
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+Dynamic: license-file
+
+# ns8-supervised-ml-lab
+
+Reproducible supervised-learning benchmark on structured NS8 modular grids. Shows dataset generation, preprocessing with pipelines, cross-validation, hyperparameter tuning, and evaluation for both classification and regression - built to be recruiter-friendly and leak-free.
+
+## Project intent
+- Keep NS8 math central (TRB/TLF kernels and derived transforms).
+- Demonstrate scikit-learn fundamentals: pipelines, CV, tuning, clean splits, reproducible runs.
+- Ship artifacts and summaries a recruiter can read quickly.
+
+## Quickstart (Phase 0)
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e .[dev]
+python -m pytest
+```
+Or with make:
+```bash
+make setup
+make test
+```
+
+## Roadmap snapshot
+- Phase 0: repo skeleton + basic formulas test (this commit).
+- Phase 1: NS8 grid generator, features, dataset builder.
+- Phase 2: supervised baselines + evaluation (classification and regression).
+- Phase 3: hyperparameter tuning and experiment tracking.
+- Phase 4: polish, leakage guards, CLI, results and figures.
+
+## Dataset generation (Phase 1 in progress)
+```bash
+python - <<'PY'
+from ns8lab.data import build_dataset
+df = build_dataset(task="task_a_view", n_samples=5, seed=0)
+print(df.head())
+PY
+```
+
+## Structure (Phase 1)
+- README.md, LICENSE, pyproject.toml, .gitignore
+- src/ns8lab/ - grids, feature extraction, dataset builder
+- tests/ - unit tests for grids, features, dataset factory
+- notebooks/01_data_exploration.ipynb - exploration placeholder
+- data/ - raw and processed data (gitignored; keep small samples only)
+- reports/figures/ - generated plots and artifacts
+
+## Next steps
+- Expand grid generator to all NS8 views (TRF/BLF/BRF/TLB/BLB/BRB) and vectorize.
+- Build dataset maker and feature extraction.
+- Add training and evaluation CLI with pipelines and tuning, saving runs and reports.

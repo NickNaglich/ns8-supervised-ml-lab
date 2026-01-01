@@ -1,0 +1,12 @@
+{
+  "run_id": "20251231_224640_task_a_view_logreg_tune",
+  "task": "task_a_view",
+  "model": "logreg",
+  "metrics": {
+    "accuracy": 0.5,
+    "f1_macro": 0.44979073500745326
+  },
+  "best_params": {
+    "clf__C": 4.0
+  }
+}

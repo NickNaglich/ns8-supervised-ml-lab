@@ -1,0 +1,17 @@
+task: task_c_regress_n
+seed: 0
+test_size: 0.2
+hist_bins: 16
+n_samples: 800
+n_values: [16, 24, 32, 48, 64, 96, 128]
+k_values: [1, 2, 3, 4, 5, 6, 7, 8]
+views: ["TLF", "TRB"]
+cv_splits: 3
+models:
+  - name: ridge
+    param_grid:
+      alpha: [0.1, 1.0, 10.0]
+  - name: rf_reg
+    param_grid:
+      n_estimators: [200, 400]
+      max_depth: [null, 12, 20]

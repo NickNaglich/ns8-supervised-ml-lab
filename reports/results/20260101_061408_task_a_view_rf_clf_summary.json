@@ -1,0 +1,12 @@
+{
+  "run_id": "20260101_061408_task_a_view_rf_clf",
+  "task": "task_a_view",
+  "model": "rf_clf",
+  "metrics": {
+    "accuracy": 0.25609756097560976,
+    "f1_macro": 0.23648148584627715
+  },
+  "best_params": {
+    "clf__max_depth": null
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "run_id": "20260101_061408_task_a_view_linear_svc",
+  "task": "task_a_view",
+  "model": "linear_svc",
+  "metrics": {
+    "accuracy": 0.2073170731707317,
+    "f1_macro": 0.17400767336112166
+  },
+  "best_params": {
+    "clf__C": 0.5
+  }
+}

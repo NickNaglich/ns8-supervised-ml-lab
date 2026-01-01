@@ -1,0 +1,12 @@
+{
+  "run_id": "20251231_230703_task_b_kbucket_logreg_tune",
+  "task": "task_b_kbucket",
+  "model": "logreg",
+  "metrics": {
+    "accuracy": 1.0,
+    "f1_macro": 1.0
+  },
+  "best_params": {
+    "clf__C": 0.5
+  }
+}

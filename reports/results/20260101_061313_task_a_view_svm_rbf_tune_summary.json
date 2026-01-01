@@ -1,0 +1,13 @@
+{
+  "run_id": "20260101_061313_task_a_view_svm_rbf_tune",
+  "task": "task_a_view",
+  "model": "svm_rbf",
+  "metrics": {
+    "accuracy": 0.4702702702702703,
+    "f1_macro": 0.42877690876778074
+  },
+  "best_params": {
+    "clf__C": 2.0,
+    "clf__gamma": 0.1
+  }
+}

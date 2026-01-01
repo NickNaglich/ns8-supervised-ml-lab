@@ -1,0 +1,22 @@
+task: task_b_kbucket
+seed: 1
+test_size: 0.2
+hist_bins: 16
+n_samples: 700
+n_values: [32]
+k_values: [1, 2, 3, 4, 5, 6, 7, 8]
+views: ["TLF", "TRB", "BLF", "BRF"]
+k_buckets: 8
+cv_splits: 3
+models:
+  - name: logreg
+    param_grid:
+      C: [0.5, 1.0, 2.0]
+  - name: svm_rbf
+    param_grid:
+      C: [0.5, 1.0, 2.0]
+      gamma: ["scale", 0.1]
+  - name: rf_clf
+    param_grid:
+      n_estimators: [150, 250]
+      max_depth: [null, 8, 14]

@@ -1,0 +1,5 @@
+mode: run
+experiments_path: reports/experiments
+figures_path: reports/figures
+results_path: reports/results/results.md
+runs_path: runs

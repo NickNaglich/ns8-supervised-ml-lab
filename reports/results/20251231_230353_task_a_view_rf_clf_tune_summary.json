@@ -1,0 +1,13 @@
+{
+  "run_id": "20251231_230353_task_a_view_rf_clf_tune",
+  "task": "task_a_view",
+  "model": "rf_clf",
+  "metrics": {
+    "accuracy": 0.4178082191780822,
+    "f1_macro": 0.4013244164699712
+  },
+  "best_params": {
+    "clf__max_depth": null,
+    "clf__n_estimators": 150
+  }
+}
