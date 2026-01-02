@@ -1843,6 +1843,23 @@ Keeps the UI lean while providing a clear path to deeper docs.
 
 ---
 
+## 2025-01-03 17:00 - README refresh plan started (R-0)
+
+**Summary**  
+Started the README refresh plan (FIX-README): audited pain points and defined the target shape (concise overview, quickstart, tasks-at-a-glance, UI usage, artifacts, structure, results table, cleanup note).
+
+**Files changed**  
+- FIX-README.md  
+
+**Reasoning**  
+Sets the roadmap for a more user-friendly README without recruiter-specific phrasing.
+
+**Validation**  
+- Docs-only change.
+
+**Notes**  
+- Next: outline and rewrite sections per plan.
+
 ## 2025-01-03 16:55 - Figures tab enhanced
 
 **Summary**  
@@ -1897,3 +1914,40 @@ The plan now includes a concise, reviewable set of checkboxes so we can verify P
 - Pending: execute `make test` once dependencies are installed; add README usage snippets after core APIs stabilize.
 
 ---
+---
+
+## 2025-01-03 17:10 - README outline drafted (R-1)
+
+**Summary**  
+Completed the README outline in FIX-README: sections for overview, tasks at a glance, quickstart, UI usage, artifacts, results snapshot, structure, engineered-features note, and cleanup.
+
+**Files changed**  
+- FIX-README.md  
+
+**Reasoning**  
+Defines the structure to rewrite the README for clarity and brevity.
+
+**Validation**  
+- Docs-only change.
+
+**Notes**  
+- Next: implement the rewrite (Phase R-2).
+---
+
+## 2025-01-03 17:20 - README rewritten (R-2)
+
+**Summary**  
+Rewrote README with concise sections: overview, tasks at a glance, quick start, UI usage, results snapshot, common commands, artifacts, engineered-features note, structure, and cleanup. Removed recruiter-specific phrasing.
+
+**Files changed**  
+- README.md  
+- FIX-README.md  
+
+**Reasoning**  
+Makes the README easier to scan and aligned with the project’s transparency focus.
+
+**Validation**  
+- Docs-only.
+
+**Notes**  
+- R-3 polish remains for link/path checks and final tone pass.
