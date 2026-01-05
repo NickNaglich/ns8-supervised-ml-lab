@@ -7,6 +7,11 @@ Reproducible supervised-learning experiments on structured NS8 modular grids. Mo
 - Data: synthetic NS8 grids → engineered features; no raw grids used for training.
 - Transparency: runs log metrics, configs, CV results, models, and figures for inspection.
 
+## Design intent
+- Representation over model lottery: data is frozen to engineered features and raw grids are excluded so behavior traces to representation choices instead of memorization or capacity.
+- Lightweight models by design: small, efficient estimators make leakage and structure issues visible rather than hiding them behind overpowered models.
+- Three diagnostic tasks: Task A probes invariance limits (symmetry vs. representation), Task B spotlights leakage via grouping choices, and Task C sanity-checks whether scale and structure are encoded.
+
 ## Quick Start
 ```bash
 python -m pip install --upgrade pip
@@ -23,6 +28,16 @@ UI: `streamlit run ui/app.py` (read-only by default; set `mode: run` or `NS8_UI_
 - Figures tab: pick sources (reports/figures, reports/experiments, runs), optional name filter, max-count slider.
 - Dataset Explorer: models use engineered features (no raw grids); grid render is for sanity-checking (N, k, view).
 - Run Controls: gated by `ui/config.yaml`; commands shown even in read-only mode.
+
+## UI screenshots
+- Tasks panel from the Streamlit app with the three workloads (A: view clf, B: k-bucket clf, C: regress N).
+![Streamlit tasks panel](media/Tasks.png)
+
+- Overview cards ("What you're seeing") summarizing the engineered-features focus, task intent, and read-only browsing by default.
+![Streamlit overview cards](media/What_Your_Seeing.png)
+
+- Results snapshot table filtered to the three tasks, showing grouping, model choices, and metrics/configs from recent runs.
+![Streamlit results snapshot](media/Results_Snapshot.png)
 
 ## Tasks at a glance
 - Task A — View classification: probes invariance limits; errors cluster across mirror-related views.
@@ -50,7 +65,7 @@ UI: `streamlit run ui/app.py` (read-only by default; set `mode: run` or `NS8_UI_
 - Mirrored summaries: `reports/experiments/<timestamp>/` and aggregated tables/cards in `reports/results/`.
 
 ## Why engineered features (not raw grids)
-- Raw grids would make tasks trivial and encourage memorization; engineered features force structural learning and expose invariance/leakage limits.
+- Raw grids or deep models would make the tasks trivial via memorization; engineered features constrain what the model can see, making invariance limits, leakage from grouping choices, and scale encoding visible.
 
 ## Structure
 - `src/ns8lab/` — grids, features, data builder, train/eval pipelines, tuning, CLI.
