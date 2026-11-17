@@ -1951,3 +1951,31 @@ Makes the README easier to scan and aligned with the project’s transparency focu
 
 **Notes**  
 - R-3 polish remains for link/path checks and final tone pass.
+
+
+## 2026-11-16 â€” task-local grouped validation and native baselines
+
+- Based on public153ccf5; isolated fix/grouped-validation-baselines-20261116.
+- Shared outer/inner group contract in actual train/tune paths; explicit groups,
+  row memberships, class-support rejection and no automatic row-split fallback.
+  nk identifies k modulo N. Task B default/recommended domain is explicitly now
+  N16/24/32 with N grouping; historic successful/failed scores are preserved.
+- Task C records no-fit same-input feat_value_max=N baseline. No new generator,
+  raw-grid learner, family, recovery operator, provider or public deployment.
+- Targeted tests: first18pass/1reject from unsupported old random artifact-test
+  class support; receipt retained. Corrected test domain and invalid-mode guard:
+  21pass. Actual train/tune searches see groups and fold-local scaler inputs.
+- ONE predeclared96-row factorial comparison, outerN32/innerN16 vs24, no search:
+  accuracy logistic0.1875 / majority0.125 / 1NN0.3125. Logistic does not beat1NN.
+  53 feature-equivalent pairs,3 exact-grid pairs; no conflicting/cross-partition
+  aliases. Nine fixed fits total; no repeat/seeds/domain change. Frozen raw data,
+  memberships, predictions and exact runtime are retained in the enclosing task
+  evidence/ and benchmark/, outside this source checkout. Not external benefit.
+- See docs/GROUPED_VALIDATION.md and enclosing task RESULT.txt. Local candidate
+  only; no push or adoption claim. Existing lab environments remain unchanged.
+
+
+## 2026-11-16 - repository CI follow-through
+
+Added read-only-permission PR/main CI for the full pytest suite on Python3.11
+and3.12. No benchmark rerun or historical-result changes; CI outcome pending.

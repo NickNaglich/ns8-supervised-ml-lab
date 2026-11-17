@@ -12,19 +12,12 @@ from typing import Dict, List, Tuple
 import joblib
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import yaml
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.model_selection import (
-    GridSearchCV,
-    GroupShuffleSplit,
-    KFold,
-    StratifiedKFold,
-    train_test_split,
-)
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -34,55 +27,20 @@ from .evaluate import classification_metrics, plot_confusion_matrix, regression_
 
 matplotlib.use("Agg")
 
+from .validation import arithmetic_baseline, prepare_split
+from .validation import build_groups as _build_groups
+from .validation import feature_columns as _feature_columns
+
 RUNS_DIR = Path("runs")
 EXPERIMENTS_DIR = Path("reports/experiments")
 FIGURES_DIR = Path("reports/figures")
 RESULTS_DIR = Path("reports/results")
 
 
-def _feature_columns(df: pd.DataFrame) -> List[str]:
-    return [c for c in df.columns if c.startswith("feat_")]
-
-
-def _build_groups(df: pd.DataFrame, mode: str) -> np.ndarray | None:
-    if mode == "none":
-        return None
-    if mode == "n":
-        return df["N"].to_numpy()
-    if mode == "nk":
-        return np.array([f"{int(n)}_{int(k)}" for n, k in zip(df["N"], df["k"])], dtype=object)
-    raise ValueError("group mode must be one of: none, n, nk")
-
-
 def _split(df: pd.DataFrame, task: TaskName, test_size: float, seed: int, group_mode: str) -> Tuple:
-    feature_cols = _feature_columns(df)
-    X = df[feature_cols].to_numpy()
-    y = df["target"].to_numpy()
-    groups = _build_groups(df, mode=group_mode)
-    if task in {"task_a_view", "task_b_kbucket"}:
-        _, counts = np.unique(y, return_counts=True)
-        stratify = y if counts.min() >= 2 and groups is None else None
-        if groups is not None:
-            splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
-            train_idx, test_idx = next(splitter.split(X, y, groups))
-            return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
-        return train_test_split(X, y, test_size=test_size, random_state=seed, stratify=stratify)
-    if groups is not None:
-        splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
-        train_idx, test_idx = next(splitter.split(X, y, groups))
-        return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
-    return train_test_split(X, y, test_size=test_size, random_state=seed)
-
-
-def _cv_for_task(task: TaskName, y_train: np.ndarray, seed: int, requested_splits: int):
-    if task in {"task_a_view", "task_b_kbucket"}:
-        _, counts = np.unique(y_train, return_counts=True)
-        min_class = int(counts.min())
-        if min_class < 2:
-            return KFold(n_splits=min(3, len(y_train)), shuffle=True, random_state=seed)
-        n_splits = max(2, min(requested_splits, min_class))
-        return StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-    return KFold(n_splits=requested_splits, shuffle=True, random_state=seed)
+    """Compatibility tuple; actual entrypoints retain the full split contract."""
+    split = prepare_split(df, task, test_size, seed, group_mode)
+    return split.X[split.train], split.X[split.test], split.y[split.train], split.y[split.test]
 
 
 def _prepare_grid(raw_grid: Dict[str, List], step: str) -> Dict[str, List]:
@@ -137,7 +95,7 @@ def _make_model_card(task: TaskName, model_name: str, metrics_dict: Dict[str, fl
     return "\n".join(lines)
 
 
-def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
+def tune_from_config(config_path: str | Path, group_mode: str | None = None):
     config_path = Path(config_path)
     config = yaml.safe_load(config_path.read_text())
 
@@ -149,9 +107,11 @@ def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
     n_values = config.get("n_values")
     k_values = config.get("k_values")
     views = config.get("views")
+    if group_mode is None:
+        group_mode = "n" if task == "task_b_kbucket" else "nk"
     group_mode = config.get("group_mode", group_mode)
     k_buckets = int(config.get("k_buckets", 8))
-    cv_splits = int(config.get("cv_splits", 3))
+    cv_splits = config.get("cv_splits", 3)
     models_cfg = config.get("models", [])
 
     df = build_dataset(
@@ -164,7 +124,12 @@ def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
         hist_bins=hist_bins,
         k_buckets=k_buckets,
     )
-    X_train, X_test, y_train, y_test = _split(df, task, test_size=test_size, seed=seed, group_mode=group_mode)
+    split = prepare_split(df, task, test_size, seed, group_mode, cv_splits)
+    X_train, X_test = split.X[split.train], split.X[split.test]
+    y_train, y_test = split.y[split.train], split.y[split.test]
+    cv = split.cv
+    baseline = arithmetic_baseline(task, X_test, split.provenance["feature_columns"], y_test)
+    config = dict(config, group_mode=group_mode, cv_splits=len(split.provenance["inner"]))
 
     registry = _model_registry(seed, task)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -178,11 +143,10 @@ def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
         pipeline, step_name = registry[model_name]
         param_grid = _prepare_grid(param_grid_raw, step=step_name)
 
-        cv = _cv_for_task(task, y_train, seed=seed, requested_splits=cv_splits)
         scoring = "f1_macro" if task in {"task_a_view", "task_b_kbucket"} else "r2"
 
-        search = GridSearchCV(pipeline, param_grid=param_grid, cv=cv, scoring=scoring, n_jobs=-1)
-        search.fit(X_train, y_train)
+        search = GridSearchCV(pipeline, param_grid=param_grid, cv=cv, scoring=scoring, n_jobs=-1, error_score="raise")
+        search.fit(X_train, y_train, groups=split.train_groups)
         best_model = search.best_estimator_
         y_pred = best_model.predict(X_test)
 
@@ -199,6 +163,10 @@ def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
         exp_dir.mkdir(parents=True, exist_ok=True)
         FIGURES_DIR.mkdir(parents=True, exist_ok=True)
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+        (run_dir / "split.json").write_text(json.dumps(split.provenance, indent=2))
+        if baseline is not None:
+            (run_dir / "baseline.json").write_text(json.dumps(baseline, indent=2))
 
         metrics_path = run_dir / "metrics.json"
         metrics_path.write_text(json.dumps(metrics_dict, indent=2))
@@ -235,6 +203,8 @@ def tune_from_config(config_path: str | Path, group_mode: str = "nk"):
             "model": model_name,
             "metrics": metrics_dict,
             "best_params": search.best_params_,
+            "group_mode": group_mode,
+            "baseline": baseline,
         }
         (RESULTS_DIR / f"{run_id}_summary.json").write_text(json.dumps(summary, indent=2))
         summaries.append(summary)

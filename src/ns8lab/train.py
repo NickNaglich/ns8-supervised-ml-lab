@@ -12,18 +12,11 @@ from typing import Dict, List, Tuple
 import joblib
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import Lasso, LogisticRegression, Ridge
-from sklearn.model_selection import (
-    GridSearchCV,
-    GroupShuffleSplit,
-    KFold,
-    StratifiedKFold,
-    train_test_split,
-)
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
@@ -33,44 +26,19 @@ matplotlib.use("Agg")
 from .data import TaskName, build_dataset
 from .evaluate import classification_metrics, plot_confusion_matrix, regression_metrics, summarize_cv
 
+from .validation import arithmetic_baseline, prepare_split
+from .validation import build_groups as _build_groups
+from .validation import feature_columns as _feature_columns
+
 FIGURES_DIR = Path("reports/figures")
 RUNS_DIR = Path("runs")
 RESULTS_DIR = Path("reports/results")
 
 
-def _feature_columns(df: pd.DataFrame) -> List[str]:
-    return [c for c in df.columns if c.startswith("feat_")]
-
-
-def _build_groups(df: pd.DataFrame, mode: str) -> np.ndarray | None:
-    if mode == "none":
-        return None
-    if mode == "n":
-        return df["N"].to_numpy()
-    if mode == "nk":
-        return np.array([f"{int(n)}_{int(k)}" for n, k in zip(df["N"], df["k"])], dtype=object)
-    raise ValueError("group mode must be one of: none, n, nk")
-
-
 def _split(df: pd.DataFrame, task: TaskName, test_size: float, seed: int, group_mode: str) -> Tuple:
-    feature_cols = _feature_columns(df)
-    X = df[feature_cols].to_numpy()
-    y = df["target"].to_numpy()
-    groups = _build_groups(df, mode=group_mode)
-    if task in {"task_a_view", "task_b_kbucket"}:
-        # Use stratification when each class has at least 2 members; otherwise fall back to unstratified split.
-        _, counts = np.unique(y, return_counts=True)
-        stratify = y if counts.min() >= 2 and groups is None else None
-        if groups is not None:
-            splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
-            train_idx, test_idx = next(splitter.split(X, y, groups))
-            return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
-        return train_test_split(X, y, test_size=test_size, random_state=seed, stratify=stratify)
-    if groups is not None:
-        splitter = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=seed)
-        train_idx, test_idx = next(splitter.split(X, y, groups))
-        return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
-    return train_test_split(X, y, test_size=test_size, random_state=seed)
+    """Compatibility tuple; actual entrypoints retain the full split contract."""
+    split = prepare_split(df, task, test_size, seed, group_mode)
+    return split.X[split.train], split.X[split.test], split.y[split.train], split.y[split.test]
 
 
 def _make_classifiers(seed: int) -> Dict[str, Tuple[Pipeline, Dict]]:
@@ -129,29 +97,25 @@ def train_and_evaluate(
     seed: int = 0,
     test_size: float = 0.2,
     hist_bins: int = 16,
-    group_mode: str = "nk",
+    group_mode: str | None = None,
 ):
     df = build_dataset(task=task, n_samples=n_samples, seed=seed, hist_bins=hist_bins)
-    X_train, X_test, y_train, y_test = _split(df, task, test_size=test_size, seed=seed, group_mode=group_mode)
+    if group_mode is None:
+        group_mode = "n" if task == "task_b_kbucket" else "nk"
+    split = prepare_split(df, task, test_size, seed, group_mode)
+    X_train, X_test = split.X[split.train], split.X[split.test]
+    y_train, y_test = split.y[split.train], split.y[split.test]
+    cv = split.cv
+    baseline = arithmetic_baseline(task, X_test, split.provenance["feature_columns"], y_test)
     models = _make_classifiers(seed) if task in {"task_a_view", "task_b_kbucket"} else _make_regressors(seed)
-    if task in {"task_a_view", "task_b_kbucket"}:
-        _, counts = np.unique(y_train, return_counts=True)
-        min_class = int(counts.min())
-        if min_class < 2:
-            cv = KFold(n_splits=3, shuffle=True, random_state=seed)
-        else:
-            n_splits = min(3, min_class)
-            cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
-    else:
-        cv = KFold(n_splits=3, shuffle=True, random_state=seed)
     scoring = _metric_for_task(task)
 
     results = []
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     for model_name, (pipe, param_grid) in models.items():
-        search = GridSearchCV(pipe, param_grid=param_grid, cv=cv, scoring=scoring, n_jobs=-1)
-        search.fit(X_train, y_train)
+        search = GridSearchCV(pipe, param_grid=param_grid, cv=cv, scoring=scoring, n_jobs=-1, error_score="raise")
+        search.fit(X_train, y_train, groups=split.train_groups)
 
         best_model = search.best_estimator_
         y_pred = best_model.predict(X_test)
@@ -167,6 +131,10 @@ def train_and_evaluate(
         FIGURES_DIR.mkdir(parents=True, exist_ok=True)
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+        (run_dir / "split.json").write_text(json.dumps(split.provenance, indent=2))
+        if baseline is not None:
+            (run_dir / "baseline.json").write_text(json.dumps(baseline, indent=2))
+
         metrics_path = run_dir / "metrics.json"
         metrics_path.write_text(json.dumps(metrics_dict, indent=2))
 
@@ -178,6 +146,8 @@ def train_and_evaluate(
             "test_size": test_size,
             "hist_bins": hist_bins,
             "model": model_name,
+            "group_mode": group_mode,
+            "cv_splits": len(split.provenance["inner"]),
             "param_grid": param_grid,
         }
         config_path.write_text(json.dumps(config_payload, indent=2))
@@ -202,6 +172,8 @@ def train_and_evaluate(
             "model": model_name,
             "metrics": metrics_dict,
             "best_params": search.best_params_,
+            "group_mode": group_mode,
+            "baseline": baseline,
         }
         (RESULTS_DIR / f"{run_id}_summary.json").write_text(json.dumps(summary, indent=2))
 
