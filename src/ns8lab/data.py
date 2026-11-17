@@ -18,7 +18,7 @@ def _default_n_values(task: TaskName) -> Sequence[int]:
     if task == "task_a_view":
         return (16, 24, 32)
     if task == "task_b_kbucket":
-        return (32,)
+        return (16, 24, 32)
     return (16, 24, 32, 48, 64, 96, 128)
 
 
