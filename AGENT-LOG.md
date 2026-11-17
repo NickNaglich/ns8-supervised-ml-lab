@@ -1973,3 +1973,9 @@ Makes the README easier to scan and aligned with the project’s transparency focu
   evidence/ and benchmark/, outside this source checkout. Not external benefit.
 - See docs/GROUPED_VALIDATION.md and enclosing task RESULT.txt. Local candidate
   only; no push or adoption claim. Existing lab environments remain unchanged.
+
+
+## 2026-11-16 - repository CI follow-through
+
+Added read-only-permission PR/main CI for the full pytest suite on Python3.11
+and3.12. No benchmark rerun or historical-result changes; CI outcome pending.
