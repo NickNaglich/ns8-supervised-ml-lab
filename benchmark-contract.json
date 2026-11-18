@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "contract_id": "ns8lab_affine_slope_benchmark_v1",
+  "application_target_status": "not_admitted",
+  "intended_use": [
+    "synthetic representation/invariance diagnostics",
+    "group leakage diagnostics",
+    "scale-encoding sanity checks",
+    "reproducible ML-engineering showcase"
+  ],
+  "source_binding": {
+    "local_baseline_commit": "2cfa858b8efd6e6ae1dc8f9ddbc60dcec23413a9",
+    "local_baseline_tree": "b0b52c66883ac6f6d34e07197237ead4c4d409f3",
+    "canonical_base_commit": "a0f390a5c3e73deb9579f885a9ae301314fe282f",
+    "canonical_base_tree": "4d7349103c7462a6e28478a3a67e9ee941ca0ac0",
+    "relationship": "local baseline adds accepted target-decision/witness work; no canonical ancestry beyond its recorded same-tree parent is claimed",
+    "generator_git_blob": "40dd50f072ffbd43ec281c3d60bf5a58f3d2304b",
+    "sha256": {
+      "src/ns8lab/grids.py": "7518bf270517ac326324eaecff6650c46908ef1670a901b0bc7f413d8b9d63ea",
+      "src/ns8lab/features.py": "b64732ff26aa5ccfd471e1a56cb170d438decc6410ad63af10aa8ac22758b012",
+      "src/ns8lab/data.py": "1a0ae58323fdf51536e4ac9a5c351e20764a8b064acf9e39f39530eb63bd23a7",
+      "src/ns8lab/validation.py": "e74dd650fc734e2a8f83d9f960f9bc35fd4168e4a50d2b8e8cccd1b76dfa2c76",
+      "src/ns8lab/feature_variants.py": "86a088ed58a54fce1922803bd7c4819347c81e624baa4757d6d610119cfcbaca",
+      "experiments/fresh_model_control.py": "e4ef1edad626e9c00b2eba9d73efb0ac04633c4745615df734474bccf69b4f7e",
+      "experiments/observable_target_gate.py": "5b13a4a09ffe244fa4861325fb123cede9758291a58134f875a1a226b65d3d38",
+      "examples/task_a_origin_witness.json": "02170e8e86dc438f5e56e452b293668c5cc2c423da7ebfb880c08b502a23be02"
+    }
+  },
+  "operator": {
+    "id": "ns8lab_additive_slope_v1",
+    "formula": "G[i,j] = 1 + ((i + k*j) % N)",
+    "indices": "i,j in 0..N-1",
+    "values": "integers1..N, one-based display",
+    "parameters": {
+      "N": "positive integer size",
+      "k": "positive integer kernel slope; raw kernel reduces k moduloN; NOT an additive phase"
+    },
+    "views": [
+      "TLF",
+      "TRF",
+      "BLF",
+      "BRF",
+      "TLB",
+      "BLB",
+      "BRB",
+      "TRB"
+    ],
+    "view_order": [
+      "flip rows if first letterB",
+      "flip columns if second letterR",
+      "transpose if third letterB"
+    ],
+    "view_codes": "first T/B, second L/R, third F/B; labels record selected generation view",
+    "intent": "documented repo-local convention; historical authorial intent not established"
+  },
+  "feature_interface": {
+    "input": "engineered feat_* columns in source/dataframe order",
+    "hist_bins": 16,
+    "dimensions_at_hist_bins16": 48,
+    "ordered_names": [
+      "feat_hist_bin_00",
+      "feat_hist_bin_01",
+      "feat_hist_bin_02",
+      "feat_hist_bin_03",
+      "feat_hist_bin_04",
+      "feat_hist_bin_05",
+      "feat_hist_bin_06",
+      "feat_hist_bin_07",
+      "feat_hist_bin_08",
+      "feat_hist_bin_09",
+      "feat_hist_bin_10",
+      "feat_hist_bin_11",
+      "feat_hist_bin_12",
+      "feat_hist_bin_13",
+      "feat_hist_bin_14",
+      "feat_hist_bin_15",
+      "feat_hist_entropy",
+      "feat_hist_gini",
+      "feat_row_mean_mean",
+      "feat_row_mean_std",
+      "feat_col_mean_mean",
+      "feat_col_mean_std",
+      "feat_row_var_mean",
+      "feat_row_var_std",
+      "feat_col_var_mean",
+      "feat_col_var_std",
+      "feat_row_skew_mean",
+      "feat_row_skew_std",
+      "feat_col_skew_mean",
+      "feat_col_skew_std",
+      "feat_row_kurt_mean",
+      "feat_row_kurt_std",
+      "feat_col_kurt_mean",
+      "feat_col_kurt_std",
+      "feat_value_min",
+      "feat_value_max",
+      "feat_value_mean",
+      "feat_value_std",
+      "feat_autocorr_axis0_lag1",
+      "feat_autocorr_axis0_lag2",
+      "feat_autocorr_axis1_lag1",
+      "feat_autocorr_axis1_lag2",
+      "feat_symmetry_horizontal",
+      "feat_symmetry_vertical",
+      "feat_symmetry_rot180",
+      "feat_fft_energy_total_log",
+      "feat_fft_high_ratio",
+      "feat_fft_low_ratio"
+    ],
+    "families": [
+      "16normalized histogram bins plus entropy/gini",
+      "row/column/value statistics",
+      "axis lag correlations",
+      "symmetry scores",
+      "FFT energy features"
+    ],
+    "excluded_from_X": [
+      "raw grids",
+      "N/k/view/target metadata",
+      "group IDs",
+      "feature_variant/feature_pipeline_id/feature_pipeline_spec"
+    ],
+    "target_visibility": "metadata exclusion does not imply target hidden: feat_value_max exposes N",
+    "native_default_unchanged": true,
+    "opt_in_variant": "c_order_int64_v1; same formulas, explicit source/runtime identity; no cross-platform bit-equality promise",
+    "other_hist_bins": "supported code options change feature schema; not the declared48-dimensional profile"
+  },
+  "tasks": {
+    "A": {
+      "target": "selected view provenance label",
+      "meaning": "invariance/representation diagnostic, not guaranteed unique historical origin",
+      "existing_witness": {
+        "path": "examples/task_a_origin_witness.json",
+        "saved_rows": [
+          0,
+          4
+        ],
+        "N": 16,
+        "k": 1,
+        "labels": [
+          "TLF",
+          "TLB"
+        ],
+        "raw_values_identical": true,
+        "all48_native_hex_identical": true,
+        "bound": "at most1correct of these2saved records for any deterministic same-X output; pair-only, not heldout/population accuracy"
+      }
+    },
+    "B": {
+      "target": "k % k_buckets, default8",
+      "meaning": "synthetic leakage/group-transfer diagnostic; label-construction metadata is not a same-X predictor",
+      "default_sizes": [
+        16,
+        24,
+        32
+      ]
+    },
+    "C": {
+      "target": "float(N)",
+      "meaning": "synthetic scale-encoding sanity check, already solved by featuremax"
+    }
+  },
+  "split_meaning": {
+    "none": "row split; no grouped-transfer claim",
+    "n": "disjoint N groups: finite heldout-size question only, with required class/fold support",
+    "nk": "groups(N,k%N); may share N across partitions, NOT unseen-N generalization",
+    "validation": "outer/inner groups and class support checked before fitting; no silent fallback; preprocessing training/fold-only",
+    "fresh_control_profile": {
+      "N": [
+        16,
+        24,
+        32
+      ],
+      "k": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "views": "all8 in declared order",
+      "rows": 192,
+      "splitter": "GroupShuffleSplit on nk",
+      "seed": 0,
+      "test_size": 0.25,
+      "groups_train_test": [
+        18,
+        6
+      ],
+      "rows_train_test": [
+        144,
+        48
+      ],
+      "scope": "one explicit fresh-control profile, not every dataset/train default; prepare/validate no-fit; fit separate opt-in"
+    }
+  },
+  "baselines": {
+    "A": "exact saved equality/ambiguity witness retaining original labels; train-only majority is a minimal predictive reference, not a unique inverse",
+    "B": "same-X train-only majority and standardized1NN on identical admitted memberships; k%8 metadata is only a construction oracle",
+    "C": "no-fit y=feat_value_max=N for this complete-square generator"
+  },
+  "preserved_findings": {
+    "TaskB_finite_N32_holdout_accuracy": {
+      "logistic": 0.1875,
+      "majority": 0.125,
+      "standardized_1NN": 0.3125
+    },
+    "TaskA_fixed_Nk_accuracy": {
+      "native": 0.125,
+      "canonical": 0.125,
+      "changed_predictions": 8,
+      "conclusion": "no measured metric gain; this partition only"
+    },
+    "historical_scores": "all historical successes/failures/labels remain unchanged; provenance limits remain separate",
+    "exact_group_bounds": "saved native192 table19/24 and raw15/16 are table-specific oracle ceilings; layout-sensitive exact partitions need not nest; not heldout/population scores"
+  },
+  "other_contracts": {
+    "LAB": {
+      "formula": "1 + ((i*j + phase - 1) % N)",
+      "parameter_role": "additive phase on product residues",
+      "relationship": "different operator; no direct phase-period/recovery/QFT theorem transfer"
+    },
+    "ToneSight_fixed8": {
+      "relationship": "separate fixed8 domain/intake contract, not these8view labels or48features; no encoding/benefit bridge admitted"
+    }
+  },
+  "real_application_requires": [
+    "named producer and observed input schema/units",
+    "target measured independently of generator/provenance metadata",
+    "receiving action and error/acquisition costs",
+    "strongest exact/simple native baseline",
+    "source/time/group/duplicate structure and explicit heldout interpretation",
+    "data rights for selected use"
+  ],
+  "limits": [
+    "no external application target or learned benefit admitted",
+    "no unique inverse/provenance authentication",
+    "no new class/label/generator/default/model change",
+    "future application must define a different admitted decision before more training; this contract creates no standing process"
+  ]
+}

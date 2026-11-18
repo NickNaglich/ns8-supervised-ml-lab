@@ -1999,3 +1999,13 @@ Added a separate opt-in experiments/fresh_model_control.py with no-fit prepare/v
 ## 2026-11-17: pre-fit snapshot integrity repair
 
 Bind exact fitting input bytes to the manifest checked across validation; use loaded in-memory features, split and identities without unchecked rereads. Add post-validation race controls requiring zero estimator construction/fits. Preparation/validation functions unchanged. Earlier one actual fresh no-fit preparation remains pinned to a4e75553; no extraction or real classifier/scaler fit rerun for this repair.
+
+
+## 2026-11-17: application target gate, no new training
+
+Bounded admitted-source research finds no qualified external application target. Added stdlib read-only selected saved two-row TaskA witness and small contract/source-convention controls. Actual repo generator is additive slope, distinct from LAB multiplicative phase; deliberate convention is not treated as a proven bug. Preserve historical labels/results and all old sources/data. No new cohort/extraction/fits/search or source publication.
+
+
+## 2026-11-18: prepare reviewed witness and benchmark contract integration
+
+Prepared the accepted saved ambiguity witness/checker and source-bound human/JSON benchmark contract on canonical main. Application target remains not_admitted; slope/view semantics, split limits and historical/no-gain results are preserved. Reused the accepted12-case witness/CLI checks and docs validation; no new case, cohort, extraction or scientific fit. Source publication remains held for root review. This records the b99 documentation integration without altering prior log history.
