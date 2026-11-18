@@ -5,11 +5,14 @@ from __future__ import annotations
 import argparse
 
 from .data import build_dataset
+from .feature_variants import FEATURE_VARIANTS
 from .train import train_and_evaluate
 from .tune import tune_from_config
 
 
 def _dataset_cmd(args: argparse.Namespace) -> None:
+    variant = getattr(args, "feature_variant", "native")
+    stable_export = variant != "native" and args.output is not None
     df = build_dataset(
         task=args.task,
         n_samples=args.n_samples,
@@ -18,10 +21,13 @@ def _dataset_cmd(args: argparse.Namespace) -> None:
         k_values=args.k_values,
         views=args.views,
         hist_bins=args.hist_bins,
+        feature_variant=variant,
+        cache_path=args.output if stable_export else None,
     )
     output = args.output
     if output:
-        df.to_csv(output, index=False)
+        if not stable_export:
+            df.to_csv(output, index=False)
         print(f"Saved dataset to {output} ({len(df)} rows)")
     else:
         print(df.head())
@@ -62,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     ds.add_argument("--k-values", type=int, nargs="*", dest="k_values")
     ds.add_argument("--views", type=str, nargs="*", dest="views")
     ds.add_argument("--hist-bins", type=int, default=16, dest="hist_bins")
+    ds.add_argument("--feature-variant", choices=FEATURE_VARIANTS, default="native")
     ds.add_argument("--output", type=str, default=None)
     ds.set_defaults(func=_dataset_cmd)
 

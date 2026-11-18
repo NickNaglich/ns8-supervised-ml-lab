@@ -1979,3 +1979,13 @@ Makes the README easier to scan and aligned with the project’s transparency focu
 
 Added read-only-permission PR/main CI for the full pytest suite on Python3.11
 and3.12. No benchmark rerun or historical-result changes; CI outcome pending.
+
+## 2026-11-17: reviewed C-order source integration
+Integrated the explicit dataset feature option plus its Task A identifiability,
+layout-producer and fixed model-control source/tests. Native defaults/formulas
+and training entrypoints remain unchanged; distinct optional pipeline identity
+and exclusive stable exports are documented. The reviewed model control retained
+12.5% accuracy for both representations, zero metric gain and8changed predictions.
+No scientific comparison was rerun for integration; standard tests include their
+existing bounded train/tune smoke fits. No raw cohort, local receipt or model
+binary is included. Unrelated parked source/history was not imported.
