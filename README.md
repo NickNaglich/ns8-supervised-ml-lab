@@ -1,5 +1,13 @@
 # ns8-supervised-ml-lab
 
+
+> **Benchmark contract: application target not admitted.** This project studies
+> synthetic affine-slope grids through engineered features; k is a slope, not
+> LAB additive phase. See the [human contract](docs/BENCHMARK_CONTRACT.md),
+> [machine contract](benchmark-contract.json), [target decision](docs/APPLICATION_TARGET_DECISION.md)
+> and [saved ambiguity witness](examples/task_a_origin_witness.json). Existing
+> labels, defaults and historical/no-gain results are preserved.
+
 Reproducible supervised-learning experiments on structured NS8 modular grids. Models train on engineered features (entropy, symmetry, autocorr, FFT) to study invariance, leakage, and scale with transparent artifacts.
 
 ## Overview
@@ -132,3 +140,9 @@ in the experiment docs. No external-application or learned-benefit claim follows
 
 See [fresh-data preparation and explicit model control](docs/FRESH_MODEL_CONTROL.md).
 Preparation and validation fit no models; fitting is a separate opt-in command.
+
+## Application-target boundary and saved witness
+
+[Target decision and source-convention check](docs/APPLICATION_TARGET_DECISION.md)
+records the current missing application input/decision gate and a runnable saved
+TaskA ambiguity witness. No training or historical relabeling is implied.
