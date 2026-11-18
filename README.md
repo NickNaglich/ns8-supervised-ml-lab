@@ -104,3 +104,26 @@ prediction=feat_value_max=N for this synthetic complete-square generator.
 Perfect regression alone adds no demonstrated value over that identity.
 Raw grids are excluded from model inputs; retained features can expose labels.
 See docs/GROUPED_VALIDATION.md for the corrected contract and bounded protocol.
+
+## Opt-in C-order datasets and controlled diagnostics
+
+Native feature extraction remains the default. Dataset generation can explicitly
+select the same-formula C-order storage variant:
+
+```bash
+python -m ns8lab.cli dataset --task task_a_view --n-samples 2 --n-values 24 --k-values 1 --views BLF TRB --feature-variant c_order_int64_v1 --output data/new-stable.csv
+```
+
+Stable outputs carry source/runtime/bin-bound pipeline identity outside `feat_*`
+model inputs and refuse existing targets. Native schema/cache behavior stays as
+before; train/tune do not adopt this variant. See [dataset contract](docs/C_ORDER_DATASETS.md).
+
+Source includes [Task A exact-input diagnostics](docs/TASK_A_IDENTIFIABILITY.md),
+the [layout producer](docs/LAYOUT_STABILITY.md), and a [fixed model control](docs/CANONICAL_MODEL_CONTROL.md).
+In the previously reviewed fixed Nk holdout, native and canonical features both
+scored **12.5% accuracy** and **0.11538 macro-F1**: no measured improvement.
+Eight of48predictions differed despite equal aggregate scores. These results are
+scoped to that partition and remain distinct from the historical scores above.
+Integration tests are not a rerun of those experiments. Raw cohorts, models and
+local receipts are not included; the pinned-input reproduction limits are stated
+in the experiment docs. No external-application or learned-benefit claim follows.

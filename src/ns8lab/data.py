@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+from importlib.util import find_spec
 from typing import Iterable, Literal, Sequence
 
 import numpy as np
@@ -10,6 +12,7 @@ import pandas as pd
 
 from .features import DEFAULT_HIST_BINS, extract_features
 from .grids import VALID_VIEWS, generate_grid
+from .feature_variants import FEATURE_VARIANTS, c_order_features, pipeline_metadata
 
 TaskName = Literal["task_a_view", "task_b_kbucket", "task_c_regress_n"]
 
@@ -45,6 +48,43 @@ def _save_dataset(df: pd.DataFrame, path: Path) -> None:
     raise ValueError(f"Unsupported cache format for {path!s}; use .csv or .parquet")
 
 
+
+def _prepare_stable_cache(path):
+    path = Path(path)
+    if path.exists() or path.is_symlink():
+        raise FileExistsError(f"Refusing existing stable dataset target: {path}")
+    if path.suffix.lower() not in {".csv", ".parquet"}:
+        raise ValueError("Stable cache requires .csv or .parquet")
+    if not path.parent.is_dir():
+        raise FileNotFoundError(f"Stable cache parent does not exist: {path.parent}")
+    if path.suffix.lower() == ".parquet" and not (find_spec("pyarrow") or find_spec("fastparquet")):
+        raise RuntimeError("Stable Parquet cache requires an already installed engine; use CSV")
+    return path
+
+
+def _save_stable_dataset(df, path):
+    # Preflight rejects existing targets before work; x-mode also closes races.
+    created = None
+    try:
+        csv = path.suffix.lower() == ".csv"
+        options = {"encoding": "utf-8", "newline": ""} if csv else {}
+        with path.open("x" if csv else "xb", **options) as stream:
+            created = os.fstat(stream.fileno())
+            if csv:
+                df.to_csv(stream, index=False)
+            else:
+                df.to_parquet(stream, index=False)
+    except BaseException:
+        if created is not None:
+            try:
+                current = path.stat()
+                if (current.st_dev, current.st_ino) == (created.st_dev, created.st_ino):
+                    path.unlink()
+            except OSError:
+                pass
+        raise
+
+
 def build_dataset(
     task: TaskName,
     n_samples: int,
@@ -55,9 +95,20 @@ def build_dataset(
     hist_bins: int = DEFAULT_HIST_BINS,
     cache_path: str | Path | None = None,
     k_buckets: int = 8,
+    feature_variant: str = "native",
 ) -> pd.DataFrame:
     """Sample NS8 grids, extract features, and return a tidy DataFrame."""
     task = _validate_task(task)
+    if feature_variant not in FEATURE_VARIANTS:
+        raise ValueError(f"feature_variant must be one of {FEATURE_VARIANTS}")
+    stable = feature_variant != "native"
+    stable_cache_target = None
+    metadata = None
+    if stable:
+        if type(n_samples) is not int or n_samples < 1:
+            raise ValueError("Stable datasets require positive integer n_samples")
+        stable_cache_target = _prepare_stable_cache(cache_path) if cache_path is not None else None
+        metadata = pipeline_metadata(hist_bins)
     rng = np.random.default_rng(seed)
 
     n_candidates = tuple(n_values) if n_values is not None else _default_n_values(task)
@@ -83,7 +134,7 @@ def build_dataset(
         k = int(rng.choice(k_candidates))
         view = str(rng.choice(view_candidates))
         grid = generate_grid(N, k, view=view)
-        feat = extract_features(grid, hist_bins=hist_bins)
+        feat = c_order_features(grid, hist_bins=hist_bins) if stable else extract_features(grid, hist_bins=hist_bins)
 
         if task == "task_a_view":
             target = view
@@ -105,11 +156,15 @@ def build_dataset(
             "target": target,
             "target_type": target_type,
         }
+        if metadata is not None:
+            record.update(metadata)
         record.update(feat)
         records.append(record)
 
     df = pd.DataFrame.from_records(records)
-    if cache_path is not None:
+    if stable and stable_cache_target is not None:
+        _save_stable_dataset(df, stable_cache_target)
+    elif cache_path is not None:
         _save_dataset(df, Path(cache_path))
     return df
 
