@@ -127,3 +127,8 @@ scoped to that partition and remain distinct from the historical scores above.
 Integration tests are not a rerun of those experiments. Raw cohorts, models and
 local receipts are not included; the pinned-input reproduction limits are stated
 in the experiment docs. No external-application or learned-benefit claim follows.
+
+## Fresh comparison without prior private tables
+
+See [fresh-data preparation and explicit model control](docs/FRESH_MODEL_CONTROL.md).
+Preparation and validation fit no models; fitting is a separate opt-in command.
