@@ -1989,3 +1989,13 @@ and exclusive stable exports are documented. The reviewed model control retained
 No scientific comparison was rerun for integration; standard tests include their
 existing bounded train/tune smoke fits. No raw cohort, local receipt or model
 binary is included. Unrelated parked source/history was not imported.
+
+
+## 2026-11-17: self-contained fresh TaskA preparation/control
+
+Added a separate opt-in experiments/fresh_model_control.py with no-fit prepare/validate and explicit two-pipeline fit commands. Fixed192-row native/canonical factorial, shared Nk holdout, source/runtime/data/split identities and raw aliases; new outputs only. Historical exact replay runner, prior negative comparison, production/default/train/tune behavior unchanged. Focused tests use fake features/estimators; one new actual preparation is authorized with zero real classifier/scaler fits. No model search or public integration in this task.
+
+
+## 2026-11-17: pre-fit snapshot integrity repair
+
+Bind exact fitting input bytes to the manifest checked across validation; use loaded in-memory features, split and identities without unchecked rereads. Add post-validation race controls requiring zero estimator construction/fits. Preparation/validation functions unchanged. Earlier one actual fresh no-fit preparation remains pinned to a4e75553; no extraction or real classifier/scaler fit rerun for this repair.
