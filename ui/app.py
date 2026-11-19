@@ -22,6 +22,7 @@ try:  # pragma: no cover
         load_figures,
         health_info,
         load_run_details,
+        compare_run_evidence,
         load_dataset_sample,
         render_grid_from_row,
         stream_command,
@@ -47,6 +48,7 @@ except ImportError:  # pragma: no cover
         load_figures,
         health_info,
         load_run_details,
+        compare_run_evidence,
         load_dataset_sample,
         render_grid_from_row,
         stream_command,
@@ -100,7 +102,7 @@ def section_visual_placeholders():
     st.info("Dataset overview: head preview, feature histograms (entropy, symmetry, FFT bands), class balance charts.")
     st.info("Model visuals: confusion matrix heatmap, ROC/PR curves, metric trends from cv_results.")
     st.info("Experiment browser enhancements: metric-threshold filters, artifact badges with tooltips, figure thumbnails.")
-    st.info("Run compare: delta bar chart for selected metric, side-by-side figures, dataset signature badge.")
+    st.info("Run compare: recorded evidence/status, descriptive metrics, side-by-side figures and reported dataset identity.")
     st.caption("These placeholders will be replaced as UI-FX phases land.")
 
 
@@ -259,6 +261,26 @@ def section_results_browser(index: list, device: str, clear_cache=None):
     st.caption("Tip: runs live under reports/experiments/* and runs/* on disk. Open the run_path column for folders.")
 
 
+def show_run_evidence(evidence):
+    st.subheader("Recorded split evidence")
+    split = evidence["split"]
+    st.caption(f"Split: {split['status']}")
+    if evidence["split_summary"] is not None:
+        st.json(evidence["split_summary"])
+    elif split.get("reason"):
+        st.info(split["reason"])
+    st.subheader("Recorded baseline")
+    baseline = evidence["baseline"]
+    st.caption(f"Baseline: {baseline['status']} (optional; native classification runs may omit it)")
+    if baseline["status"] == "recorded":
+        value = baseline["value"]
+        st.json({"name": value["name"], "metrics": value["metrics"],
+                 "prediction_count": len(value["prediction"]), "scope": value.get("scope", "not recorded")})
+    elif baseline.get("reason"):
+        st.info(baseline["reason"])
+    st.caption("Recorded evidence only; missing records stay unknown. No model is loaded or run.")
+
+
 def section_run_details(index: list):
     st.header("Run Details")
     if not index:
@@ -279,6 +301,8 @@ def section_run_details(index: list):
     st.caption(f"Run folder: {run_entry['run_path']}")
     sig = load_dataset_signature_from_run(run_entry["run_path"])
     st.caption(f"Dataset signature: {sig or 'not recorded'}")
+
+    show_run_evidence(details["evidence"])
 
     st.subheader("Metrics")
     if details.get("metrics"):
@@ -333,7 +357,7 @@ def section_compare_runs(index: list):
     with st.expander("Quick tips", expanded=False):
         st.markdown(
             "- Compare runs from the same task; signatures that differ imply different data.\n"
-            "- Use metric delta to spot gains; figures show where errors move."
+            "- Inspect recorded split/data evidence before interpreting differences; raw metrics are descriptive."
         )
     run_ids = [r["run_id"] for r in index]
     col1, col2 = st.columns(2)
@@ -365,21 +389,20 @@ def section_compare_runs(index: list):
     if not sig_a or not sig_b:
         st.info("One or both runs are missing dataset signatures.")
 
-    st.subheader("Metrics delta")
+    comparison = compare_run_evidence(details_a["evidence"], details_b["evidence"])
+    st.subheader("Recorded comparison evidence")
+    st.caption(f"Status: {comparison['status']}")
+    st.dataframe(comparison["facts"])
+    st.info(comparison["scope"])
+    st.subheader("Recorded metrics (descriptive)")
     metrics_a = details_a.get("metrics", {})
     metrics_b = details_b.get("metrics", {})
-    metrics_keys = set(metrics_a.keys()) | set(metrics_b.keys())
-    metric_choice = st.selectbox("Metric to highlight", sorted(metrics_keys), key="metric_choice")
-    delta = None
-    rows = []
-    for k in metrics_keys:
-        va, vb = metrics_a.get(k), metrics_b.get(k)
-        if k == metric_choice and isinstance(va, (int, float)) and isinstance(vb, (int, float)):
-            delta = vb - va
-        rows.append({"metric": k, "run_a": va, "run_b": vb})
-    st.dataframe(rows)
-    if delta is not None:
-        st.metric(label=f"Δ {metric_choice} (B - A)", value=delta)
+    rows = [{"metric": key, "run_a": metrics_a.get(key), "run_b": metrics_b.get(key)}
+            for key in sorted(set(metrics_a) | set(metrics_b))]
+    if rows:
+        st.dataframe(rows)
+    else:
+        st.caption("No metrics recorded.")
 
     st.subheader("Dataset signature check")
     ds_path = st.text_input("Dataset path for signature check", "")
@@ -400,7 +423,7 @@ def section_compare_runs(index: list):
         else:
             st.caption("Could not compute dataset signature.")
     else:
-        st.caption("Dataset signatures help confirm runs use the same data; differing signatures imply different datasets.")
+        st.caption("Dataset signatures are reported file identities; missing identities remain unverified and matching reports do not authenticate provenance.")
 
     st.subheader("Config diff (changed keys)")
     config_a = details_a.get("config_yaml") or details_a.get("config_json") or details_a.get("config")

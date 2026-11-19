@@ -2009,3 +2009,13 @@ Bounded admitted-source research finds no qualified external application target.
 ## 2026-11-18: prepare reviewed witness and benchmark contract integration
 
 Prepared the accepted saved ambiguity witness/checker and source-bound human/JSON benchmark contract on canonical main. Application target remains not_admitted; slope/view semantics, split limits and historical/no-gain results are preserved. Reused the accepted12-case witness/CLI checks and docs validation; no new case, cohort, extraction or scientific fit. Source publication remains held for root review. This records the b99 documentation integration without altering prior log history.
+
+
+## 2026-11-18: recorded run evidence view
+
+Expose saved split and optional baseline records with structural validation.
+Compare task/data/schema/group/heldout evidence as incompatible, unverified or
+matching recorded facts; raw metrics stay descriptive, with no gain-style delta.
+Missing signatures remain unknown, not inferred from sample IDs/config.
+Pure saved-record/fake-surface controls require no models or Streamlit server.
+No generator, feature, training, split, model or historical result is changed.
