@@ -201,9 +201,46 @@ def test_actual_ui_details_and_comparison_with_fake_surface(tmp_path, monkeypatc
 
 
 def test_reader_does_not_import_training_or_model_loaders():
-    assert "sklearn" not in sys.modules
-    assert "ns8lab.train" not in sys.modules
-    assert "joblib" not in sys.modules
+    # Other full-suite tests legitimately import models during collection.
+    # Inspect the actual reader in a fresh process, not pytest's shared modules.
+    import subprocess
+    reader = (ROOT / "ui/utils.py").resolve()
+    code = r"""
+import importlib.abc
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+class NoModelImports(importlib.abc.MetaPathFinder):
+    def __init__(self):
+        self.attempted = []
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split(".")[0] in {"sklearn", "joblib", "ns8lab"}:
+            self.attempted.append(fullname)
+            raise AssertionError("reader attempted forbidden import: " + fullname)
+        return None
+
+guard = NoModelImports()
+sys.meta_path.insert(0, guard)
+selected = Path(sys.argv[1]).resolve(strict=True)
+spec = importlib.util.spec_from_file_location("isolated_run_evidence", selected)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+assert Path(module.__file__).resolve() == selected
+assert Path(module.__spec__.origin).resolve() == selected
+assert Path(module.load_run_evidence.__code__.co_filename).resolve() == selected
+assert not guard.attempted, guard.attempted
+loaded = [name for name in sys.modules if name.split(".")[0] in {"sklearn", "joblib", "ns8lab"}]
+assert not loaded, loaded
+print(json.dumps({"reader": str(selected), "forbidden_imports": guard.attempted, "loaded_model_modules": loaded}))
+"""
+    result = subprocess.run([sys.executable, "-I", "-B", "-c", code, str(reader)],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads(result.stdout)
+    assert report == {"reader": str(reader), "forbidden_imports": [], "loaded_model_modules": []}
 
 
 @pytest.mark.parametrize("raw", ['[]', '{broken', '{"accuracy":NaN}'])
